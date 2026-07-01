@@ -48,7 +48,15 @@ jobs:
           DB_CONTAINER=$(docker compose ps -q db)
           docker exec $DB_CONTAINER mysql -u root -prootpass -e "CREATE DATABASE IF NOT EXISTS qlshopdienthoai CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
           docker exec -i $DB_CONTAINER mysql -u root -prootpass qlshopdienthoai < QLShopDT_API/qlshopdienthoai.sql
-          echo "✅ Database imported"
+          echo "✅ Database imported"ư
+          
+      - name: Verify database import
+        run: |
+          DB_CONTAINER=$(docker compose ps -q db)
+          echo "=== Tables ==="
+          docker exec $DB_CONTAINER mysql -u root -prootpass qlshopdienthoai -e "SHOW TABLES;"
+          echo "=== Admin account ==="
+          docker exec $DB_CONTAINER mysql -u root -prootpass qlshopdienthoai -e "SELECT * FROM taikhoan WHERE tentk='admin';"
 
       - name: Health check
         run: |
