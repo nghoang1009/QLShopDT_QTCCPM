@@ -83,6 +83,10 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Debug - Check app response
+        run: |
+          curl -s http://localhost/QLShopDT_API/app.php | grep -i "đăng nhập\|login\|error\|warning" | head -20  
+
       # Chạy toàn bộ bộ test Playwright
       - name: Run Playwright tests
         run: npx playwright test --workers=1
