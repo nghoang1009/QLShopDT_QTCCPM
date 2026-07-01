@@ -3,7 +3,7 @@
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /QLShopDT_API/
+    RewriteBase /
     
     # Bỏ qua các file/folder thực sự tồn tại
     # (các file /api/*.php cũ vẫn hoạt động độc lập nhờ điều kiện này)

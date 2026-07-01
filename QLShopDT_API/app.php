@@ -43,5 +43,3 @@ if ($uri === '/') {
 
 // Dispatch request đến controller
 $router->dispatch($uri);
-echo "" >> QLShopDT_API/app.php
-echo "ob_end_flush();" >> QLShopDT_API/app.php
