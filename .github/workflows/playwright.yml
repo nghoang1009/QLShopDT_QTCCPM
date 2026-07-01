@@ -101,7 +101,7 @@ jobs:
 
       # Chạy toàn bộ bộ test Playwright (chỉ Chromium cho nhanh)
       - name: Run Playwright tests
-        run: npx playwright test --workers=1 --project=auth --project=chromium
+        sed -i 's/npx playwright test --workers=1 --project=auth --project=chromium/npx playwright test --workers=2 --retries=0 --project=auth --project=chromium/' .github/workflows/playwright.yml
         working-directory: QLShopDT_API
         env:
           CI: true
