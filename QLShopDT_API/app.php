@@ -1,4 +1,5 @@
 <?php
+sed -i 's/<?php/<?php\nob_start();/' QLShopDT_API/app.php
 /**
  * App Entry Point - Điểm vào chính cho ứng dụng MVC
  * 
@@ -42,3 +43,5 @@ if ($uri === '/') {
 
 // Dispatch request đến controller
 $router->dispatch($uri);
+echo "" >> QLShopDT_API/app.php
+echo "ob_end_flush();" >> QLShopDT_API/app.php
