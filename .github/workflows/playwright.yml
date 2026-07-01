@@ -2,16 +2,18 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 jobs:
   lint:
     name: Lint & Syntax Check
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+
       - name: PHP Syntax Check
         run: |
           find ./QLShopDT_API -name "*.php" -exec php -l {} \;
@@ -21,11 +23,13 @@ jobs:
     name: Build Docker & Run Playwright Tests
     runs-on: ubuntu-latest
     needs: lint
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Configure ports for CI
-    run: sed -i 's/8080:80/80:80/'   docker-compose.yml  
+        run: |
+          sed -i 's/8080:80/80:80/' docker-compose.yml
 
       - name: Build and start containers
         run: docker compose up -d --build
@@ -34,11 +38,13 @@ jobs:
         run: |
           echo "Waiting for MySQL..."
           DB_CONTAINER=$(docker compose ps -q db)
+
           for i in $(seq 1 60); do
             if docker exec $DB_CONTAINER mysql -u root -prootpass -e "SELECT 1;" 2>/dev/null; then
               echo "✅ MySQL is ready after $i attempts"
               break
             fi
+
             echo "Attempt $i/60..."
             sleep 3
           done
@@ -48,7 +54,7 @@ jobs:
           DB_CONTAINER=$(docker compose ps -q db)
           docker exec $DB_CONTAINER mysql -u root -prootpass -e "CREATE DATABASE IF NOT EXISTS qlshopdienthoai CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
           docker exec -i $DB_CONTAINER mysql -u root -prootpass qlshopdienthoai < QLShopDT_API/qlshopdienthoai.sql
-          echo "✅ Database imported"ư
+          echo "✅ Database imported"
 
       - name: Verify database import
         run: |
@@ -70,14 +76,16 @@ jobs:
         run: |
           for i in $(seq 1 20); do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/QLShopDT_API/app.php)
+
             if [ "$STATUS" = "200" ] || [ "$STATUS" = "302" ]; then
               echo "✅ App is up (HTTP $STATUS)"
               break
             fi
+
             echo "Attempt $i/20 - HTTP $STATUS..."
             sleep 3
           done
-      
+
       - name: Debug - Check page content
         run: |
           curl -s http://localhost/QLShopDT_API/app.php | head -50
@@ -86,7 +94,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: QLShopDT_API/package-lock.json
 
       - name: Cache Playwright browsers
@@ -98,16 +106,16 @@ jobs:
             playwright-${{ runner.os }}-
 
       - name: Install Node dependencies
-        run: npm ci
         working-directory: QLShopDT_API
+        run: npm ci
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
         working-directory: QLShopDT_API
+        run: npx playwright install --with-deps chromium
 
       - name: Run Playwright tests
-        run: npx playwright test --workers=1 --retries=0 --project=auth --project=chromium
         working-directory: QLShopDT_API
+        run: npx playwright test --workers=1 --retries=0 --project=auth --project=chromium
         env:
           CI: true
 
@@ -128,11 +136,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
     steps:
       - uses: actions/checkout@v4
+
       - name: Build production Docker image
         run: |
           docker build -t qlshopdt-api:latest .
           echo "✅ Production image built successfully"
+
       - name: Show image info
         run: docker images qlshopdt-api
