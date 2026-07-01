@@ -1,4 +1,3 @@
-
 # Playwright
 node_modules/
 /test-results/
@@ -9,3 +8,4 @@ node_modules/
 QLShopDT_API/.vs/
 QLShopDT_API/.auth/
 QLShopDT_API/test_docroot.php
+maria.sh
