@@ -1,5 +1,5 @@
 <?php
-sed -i 's/<?php/<?php\nob_start();/' QLShopDT_API/app.php
+ob_start();
 /**
  * App Entry Point - Điểm vào chính cho ứng dụng MVC
  * 
