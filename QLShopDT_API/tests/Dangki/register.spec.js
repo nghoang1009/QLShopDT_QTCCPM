@@ -22,7 +22,7 @@ test.describe('Đăng ký', () => {
     await registerPage.confirm();
 
     await expect(page).toHaveTitle(/Đăng ký/);
-    await expect(page.locator('body')).toContainText('Mật khẩu phải có ít nhất 6 ký tự');
+    await expect(page.locator('body')). toContainText('Mật khẩu phải có ít nhất 6 ký tự');
   });
 
   test('Báo lỗi khi mật khẩu thiếu chữ hoa', async ({ page }) => {
