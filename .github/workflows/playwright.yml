@@ -87,6 +87,11 @@ jobs:
         run: |
           curl -s http://localhost/QLShopDT_API/app.php | grep -i "đăng nhập\|login\|error\|warning" | head -20  
 
+      - name: Debug - Check PHP error log
+        run: |
+          APP_CONTAINER=$(docker compose ps -q app)
+          docker exec $APP_CONTAINER cat /var/log/apache2/error.log | tail -30
+
       # Chạy toàn bộ bộ test Playwright
       - name: Run Playwright tests
         run: npx playwright test --workers=1
