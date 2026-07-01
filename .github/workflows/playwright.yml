@@ -7,40 +7,29 @@ on:
     branches: [ main, master ]
 
 jobs:
-  # =====================
-  # STAGE 1: LINT
-  # =====================
   lint:
     name: Lint & Syntax Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: PHP Syntax Check
         run: |
           find ./QLShopDT_API -name "*.php" -exec php -l {} \;
           echo "✅ PHP syntax check passed"
 
-  # =====================
-  # STAGE 2: BUILD & TEST
-  # =====================
   build-and-test:
     name: Build Docker & Run Playwright Tests
     runs-on: ubuntu-latest
     needs: lint
-
     steps:
       - uses: actions/checkout@v4
 
-      # Đổi port 8080 -> 80 cho CI
       - name: Configure ports for CI
         run: sed -i 's/8080:80/80:80/' docker-compose.yml
 
-      # Build và khởi động Docker containers
       - name: Build and start containers
         run: docker compose up -d --build
 
-      # Chờ MySQL login được thật sự
       - name: Wait for MySQL to be ready
         run: |
           echo "Waiting for MySQL..."
@@ -54,7 +43,6 @@ jobs:
             sleep 3
           done
 
-      # Tạo database và import dữ liệu
       - name: Import database
         run: |
           DB_CONTAINER=$(docker compose ps -q db)
@@ -62,7 +50,6 @@ jobs:
           docker exec -i $DB_CONTAINER mysql -u root -prootpass qlshopdienthoai < QLShopDT_API/qlshopdienthoai.sql
           echo "✅ Database imported"
 
-      # Kiểm tra app có phản hồi không
       - name: Health check
         run: |
           for i in $(seq 1 20); do
@@ -75,14 +62,12 @@ jobs:
             sleep 3
           done
 
-      # Setup Node với cache npm
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: 'npm'
           cache-dependency-path: QLShopDT_API/package-lock.json
 
-      # Cache Playwright browsers (tiết kiệm ~2-3 phút mỗi lần chạy)
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:
@@ -99,14 +84,12 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: QLShopDT_API
 
-      # Chạy toàn bộ bộ test Playwright (chỉ Chromium cho nhanh)
       - name: Run Playwright tests
-        sed -i 's/npx playwright test --workers=1 --project=auth --project=chromium/npx playwright test --workers=2 --retries=0 --project=auth --project=chromium/' .github/workflows/playwright.yml
+        run: npx playwright test --workers=2 --retries=0 --project=auth --project=chromium
         working-directory: QLShopDT_API
         env:
           CI: true
 
-      # Upload báo cáo test (luôn upload dù pass hay fail)
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
@@ -115,27 +98,20 @@ jobs:
           path: QLShopDT_API/playwright-report/
           retention-days: 30
 
-      # Dọn dẹp container
       - name: Stop containers
         if: always()
         run: docker compose down
 
-  # =====================
-  # STAGE 3: DEPLOY
-  # =====================
   deploy:
     name: Deploy (Build Production Image)
     runs-on: ubuntu-latest
     needs: build-and-test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
     steps:
       - uses: actions/checkout@v4
-
       - name: Build production Docker image
         run: |
           docker build -t qlshopdt-api:latest .
           echo "✅ Production image built successfully"
-
       - name: Show image info
         run: docker images qlshopdt-api
