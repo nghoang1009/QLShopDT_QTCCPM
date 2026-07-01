@@ -90,7 +90,12 @@ jobs:
       - name: Debug - Check PHP error log
         run: |
           APP_CONTAINER=$(docker compose ps -q app)
+          echo "=== Apache error log ==="
           docker exec $APP_CONTAINER cat /var/log/apache2/error.log | tail -30
+          echo "=== PHP test run ==="
+          docker exec $APP_CONTAINER php /var/www/html/QLShopDT_API/app.php 2>&1 | head -30
+          echo "=== Check config ==="
+          docker exec $APP_CONTAINER cat /var/www/html/QLShopDT_API/config/config.php | grep DB_HOST
 
       # Chạy toàn bộ bộ test Playwright
       - name: Run Playwright tests
