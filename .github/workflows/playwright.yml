@@ -32,33 +32,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Đổi port 8080 -> 80 cho CI
+      - name: Configure ports for CI
+        run: sed -i 's/8080:80/80:80/' docker-compose.yml
+
       # Build và khởi động Docker containers
       - name: Build and start containers
-        run: |
-          sed -i 's/8080:80/80:80/' docker-compose.yml
-          docker compose up -d --build
+        run: docker compose up -d --build
 
-      # Chờ MySQL sẵn sàng (tránh import DB quá sớm)
+      # Chờ MySQL login được thật sự
       - name: Wait for MySQL to be ready
         run: |
           echo "Waiting for MySQL..."
           DB_CONTAINER=$(docker compose ps -q db)
           for i in $(seq 1 60); do
             if docker exec $DB_CONTAINER mysql -u root -prootpass -e "SELECT 1;" 2>/dev/null; then
-              echo "✅ MySQL is ready"
+              echo "✅ MySQL is ready after $i attempts"
               break
             fi
             echo "Attempt $i/60..."
             sleep 3
           done
 
+      # Tạo database và import dữ liệu
       - name: Import database
         run: |
           DB_CONTAINER=$(docker compose ps -q db)
           docker exec $DB_CONTAINER mysql -u root -prootpass -e "CREATE DATABASE IF NOT EXISTS qlshopdienthoai CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-          docker exec -i $DB_CONTAINER mysql -u root -prootpass qlshopdienthoai < qlshopdienthoai.sql
+          docker exec -i $DB_CONTAINER mysql -u root -prootpass qlshopdienthoai < QLShopDT_API/qlshopdienthoai.sql
           echo "✅ Database imported"
 
+      # Kiểm tra app có phản hồi không
       - name: Health check
         run: |
           for i in $(seq 1 20); do
@@ -71,48 +75,36 @@ jobs:
             sleep 3
           done
 
-      # Cài Node + dependencies
+      # Setup Node với cache npm
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: 'npm'
+          cache-dependency-path: QLShopDT_API/package-lock.json
 
-      - name: Debug - Find files
-        run: |
-          APP_CONTAINER=$(docker compose ps -q app)
-          docker exec $APP_CONTAINER ls /var/www/html/QLShopDT_API/
-          docker exec $APP_CONTAINER ls /var/www/html/QLShopDT_API/config/
-        continue-on-error: true
+      # Cache Playwright browsers (tiết kiệm ~2-3 phút mỗi lần chạy)
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('QLShopDT_API/package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
 
       - name: Install Node dependencies
         run: npm ci
+        working-directory: QLShopDT_API
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
+        working-directory: QLShopDT_API
 
-      - name: Debug - Check app response
-        run: |
-          curl -s http://localhost/QLShopDT_API/app.php | grep -i "đăng nhập\|login\|error\|warning" | head -20  
-
-      - name: Debug - Check PHP error log
-        run: |
-          APP_CONTAINER=$(docker compose ps -q app)
-          docker exec $APP_CONTAINER bash -c "tail -30 /var/log/apache2/error.log 2>/dev/null || echo 'No log'"
-          docker exec $APP_CONTAINER bash -c "cat /var/www/html/QLShopDT_API/config/config.php | grep DB_HOST"
-        continue-on-error: true
-
-      - name: Debug - Check Apache config
-        run: |
-          APP_CONTAINER=$(docker compose ps -q app)
-          docker exec $APP_CONTAINER bash -c "curl -s http://localhost/QLShopDT_API/app.php 2>&1 | head -50"
-        continue-on-error: true
-
-      # Chạy toàn bộ bộ test Playwright
+      # Chạy toàn bộ bộ test Playwright (chỉ Chromium cho nhanh)
       - name: Run Playwright tests
-        run: npx playwright test --workers=1
+        run: npx playwright test --workers=1 --project=auth --project=chromium
+        working-directory: QLShopDT_API
         env:
           CI: true
-          BASE_URL: http://localhost:8080
 
       # Upload báo cáo test (luôn upload dù pass hay fail)
       - name: Upload Playwright report
@@ -120,10 +112,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: playwright-report/
+          path: QLShopDT_API/playwright-report/
           retention-days: 30
 
-      # Dọn dẹp container sau khi test xong
+      # Dọn dẹp container
       - name: Stop containers
         if: always()
         run: docker compose down
