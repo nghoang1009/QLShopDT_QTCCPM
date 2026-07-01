@@ -10,6 +10,9 @@ test('TC6 - Thêm tên sản phẩm vượt quá 50 ký tự (60 ký tự) => kh
   await page.getByRole('spinbutton', { name: 'Giá (VNĐ)' }).fill('1000000');
   await page.getByLabel('Danh mục').selectOption('1');
   await page.getByRole('button', { name: 'Lưu' }).click();
+  await page.waitForTimeout(3000);
+  await page.screenshot({ path: 'after-save.png', fullPage: true });
+  console.log(await page.content());
 
   await expect(page.getByText('Thêm sản phẩm thành công')).toBeVisible();
   await expect(page.getByText(repeatChar(50)).first()).toBeVisible();

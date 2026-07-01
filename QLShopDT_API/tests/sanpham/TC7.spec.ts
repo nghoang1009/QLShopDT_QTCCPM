@@ -11,6 +11,9 @@ test('TC7 - Thêm hãng sản xuất vượt quá 30 ký tự (40 ký tự) => k
   await page.getByLabel('Danh mục').selectOption('1');
   await page.getByRole('textbox', { name: 'Hãng sản xuất' }).fill(hang40);
   await page.getByRole('button', { name: 'Lưu' }).click();
+  await page.waitForTimeout(3000);
+  await page.screenshot({ path: 'after-save.png', fullPage: true });
+  console.log(await page.content());
 
   await expect(page.getByText('Thêm sản phẩm thành công')).toBeVisible();
   await expect(page.getByText(repeatChar(30, 'B')).first()).toBeVisible();

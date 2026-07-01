@@ -12,6 +12,9 @@ test('TC8 - Thêm ghi chú vượt quá 255 ký tự (300 ký tự) => không g�
   await page.getByLabel('Danh mục').selectOption('1');
   await page.getByRole('textbox', { name: 'Ghi chú' }).fill(ghiChu300);
   await page.getByRole('button', { name: 'Lưu' }).click();
+  await page.waitForTimeout(3000);
+  await page.screenshot({ path: 'after-save.png', fullPage: true });
+  console.log(await page.content());
 
   await expect(page.getByText('Thêm sản phẩm thành công')).toBeVisible();
 
