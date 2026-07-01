@@ -61,14 +61,13 @@ jobs:
 
       - name: Health check
         run: |
-          APP_CONTAINER=$(docker compose ps -q app)
-          for i in $(seq 1 10); do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/QLShopDT_API/app.php)
+          for i in $(seq 1 20); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/QLShopDT_API/app.php)
             if [ "$STATUS" = "200" ] || [ "$STATUS" = "302" ]; then
               echo "✅ App is up (HTTP $STATUS)"
               break
             fi
-            echo "Attempt $i/10 - HTTP $STATUS..."
+            echo "Attempt $i/20 - HTTP $STATUS..."
             sleep 3
           done
 
