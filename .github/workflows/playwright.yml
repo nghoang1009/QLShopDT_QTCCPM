@@ -77,6 +77,13 @@ jobs:
           node-version: lts/*
           cache: 'npm'
 
+      - name: Debug - Find files
+        run: |
+          APP_CONTAINER=$(docker compose ps -q app)
+          docker exec $APP_CONTAINER find /var/www/html -name "config.php" 2>/dev/null
+          docker exec $APP_CONTAINER ls /var/www/html/
+        continue-on-error: true
+        
       - name: Install Node dependencies
         run: npm ci
 
@@ -99,7 +106,7 @@ jobs:
           APP_CONTAINER=$(docker compose ps -q app)
           docker exec $APP_CONTAINER bash -c "curl -s http://localhost/QLShopDT_API/app.php 2>&1 | head -50"
         continue-on-error: true
-        
+
       # Chạy toàn bộ bộ test Playwright
       - name: Run Playwright tests
         run: npx playwright test --workers=1
