@@ -44,7 +44,7 @@ jobs:
           echo "Waiting for MySQL..."
           DB_CONTAINER=$(docker compose ps -q db)
           for i in $(seq 1 60); do
-            if docker exec $DB_CONTAINER mysqladmin ping -u root -prootpass --silent 2>/dev/null; then
+            if docker exec $DB_CONTAINER mysql -u root -prootpass -e "SELECT 1;" 2>/dev/null; then
               echo "✅ MySQL is ready"
               break
             fi
