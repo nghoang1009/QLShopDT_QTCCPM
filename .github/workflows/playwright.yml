@@ -80,10 +80,10 @@ jobs:
       - name: Debug - Find files
         run: |
           APP_CONTAINER=$(docker compose ps -q app)
-          docker exec $APP_CONTAINER find /var/www/html -name "config.php" 2>/dev/null
-          docker exec $APP_CONTAINER ls /var/www/html/
+          docker exec $APP_CONTAINER ls /var/www/html/QLShopDT_API/
+          docker exec $APP_CONTAINER ls /var/www/html/QLShopDT_API/config/
         continue-on-error: true
-        
+
       - name: Install Node dependencies
         run: npm ci
 
