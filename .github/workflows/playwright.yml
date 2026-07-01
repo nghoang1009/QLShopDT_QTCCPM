@@ -85,7 +85,7 @@ jobs:
         working-directory: QLShopDT_API
 
       - name: Run Playwright tests
-        run: npx playwright test --workers=2 --retries=0 --project=auth --project=chromium
+        run: npx playwright test --workers=1 --retries=0 --project=auth --project=chromium
         working-directory: QLShopDT_API
         env:
           CI: true
