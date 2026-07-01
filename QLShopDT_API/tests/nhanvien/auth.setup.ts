@@ -4,7 +4,7 @@ import path from 'path';
 export const STORAGE_STATE = path.join(__dirname, '../../.auth/admin.json');
 
 setup('Đăng nhập admin và lưu session', async ({ page }) => {
-  await page.goto('http://localhost/QLShopDT_API/app.php');
+  await page.goto('http://localhost:8080/QLShopDT_API/app.php');
   await page.getByRole('link', { name: ' Đăng nhập' }).click();
   await page.getByRole('textbox', { name: 'Nhập tên đăng nhập' }).fill('admin');
   await page.getByRole('textbox', { name: 'Nhập mật khẩu' }).fill('123');
